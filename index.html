@@ -108,6 +108,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const CALM=new THREE.Color('#43f08a'), SPIKE=new THREE.Color('#ff3344');
 
@@ -359,11 +360,30 @@ const grid=new THREE.GridHelper(16,32,0x16323b,0x0e1f25);scene.add(grid);
 scene.add(new THREE.Mesh(new THREE.CircleGeometry(2.4,64).rotateX(-Math.PI/2),
   new THREE.MeshStandardMaterial({color:0x0a141a,roughness:.6,metalness:.2})).translateY(.001));
 
-// body + crown
-const body=mBody(); scene.add(body);
+// body (real GLB human) + crown
+const body=new THREE.Group(); scene.add(body);
 const crownMat=new THREE.MeshStandardMaterial({color:0x06140c,emissive:CALM.clone(),emissiveIntensity:2.4,roughness:.4});
-const crown=new THREE.Mesh(new THREE.TorusGeometry(.165,.014,14,44),crownMat);
-crown.rotation.x=Math.PI/2;crown.position.y=1.6;scene.add(crown);
+const crown=new THREE.Mesh(new THREE.TorusGeometry(.16,.014,14,44),crownMat);
+crown.rotation.x=Math.PI/2; crown.position.y=1.6; scene.add(crown);
+const TARGET_H=1.62;
+// geometry-space world box (Box3.setFromObject mis-measures SkinnedMesh)
+function geoBox(obj){ obj.updateWorldMatrix(true,true); const box=new THREE.Box3(),t=new THREE.Box3();
+  obj.traverse(n=>{ if(n.geometry){ n.geometry.computeBoundingBox(); t.copy(n.geometry.boundingBox); t.applyMatrix4(n.matrixWorld); box.union(t); }}); return box; }
+new GLTFLoader().load('assets/models/figure.glb', gltf=>{
+  const m=gltf.scene;
+  const mat=new THREE.MeshStandardMaterial({color:0x9aa0ac,roughness:.72,metalness:.06});
+  m.traverse(n=>{ if(n.isMesh){ n.material=mat; n.frustumCulled=false; } });
+  let bb=geoBox(m), sz=bb.getSize(new THREE.Vector3());
+  m.scale.setScalar(TARGET_H/sz.y);
+  bb=geoBox(m); const c=bb.getCenter(new THREE.Vector3());
+  m.position.x-=c.x; m.position.z-=c.z; m.position.y-=bb.min.y; // feet on ground, centered
+  body.add(m);
+  bb=geoBox(m);
+  crown.position.set(0, bb.max.y+0.02, 0);
+  const span=bb.getSize(new THREE.Vector3());
+  crown.scale.setScalar(Math.max(.6,Math.min(1.1,span.x*1.4)));
+  window.__bodyReady=true; window.__bodyBox=[+span.x.toFixed(2),+span.y.toFixed(2),+span.z.toFixed(2)];
+}, undefined, e=>{ console.warn('GLB failed, fallback', e); body.add(mBody()); window.__bodyReady=true; });
 
 // build parts
 const items=PARTS.map(part=>{
@@ -380,7 +400,7 @@ function collectMats(g){const a=[];g.traverse(n=>{if(n.material){n.material.tran
 // review-mode framing
 if(REVIEW){
   ['title','vpanel','tools','stepper','legend','hint'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
-  if(REVIEW==='body'){ controls.target.set(0,1.0,0); camera.position.set(.95,1.15,1.75); }
+  if(REVIEW==='body'){ controls.target.set(0,0.9,0); camera.position.set(1.0,1.0,3.2); }
   else { controls.target.set(0,1.0,0); camera.position.set(.7,1.05,1.3); body.visible=false; crown.visible=false; }
 }
 
@@ -464,6 +484,7 @@ function animate(){
   controls.update(); composer.render();
 }
 window.__ok=true; $('loader').style.display='none'; animate();
+window.__rig={camera,controls,renderer,scene,THREE,body};
 addEventListener('resize',()=>{W=app.clientWidth;H=app.clientHeight;camera.aspect=W/H;
   camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);});
 </script>
