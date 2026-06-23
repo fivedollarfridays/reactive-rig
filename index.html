@@ -3,30 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>REACTIVE RIG — Platform Assembly</title>
+<title>REACTIVE RIG — CAD Assembly</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#070809; --calm:#43f08a; --spike:#ff3344; --steel:#5ec8d8; --amber:#ffc24b;
-    --ink:#eef1f7; --muted:#79829a; --panel:rgba(12,15,21,.78); --line:rgba(94,200,216,.22);
-  }
+  :root{--bg:#070809;--calm:#43f08a;--spike:#ff3344;--steel:#5ec8d8;--amber:#ffc24b;
+    --ink:#eef1f7;--muted:#79829a;--panel:rgba(12,15,21,.78);--line:rgba(94,200,216,.22)}
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',monospace}
-  #app{position:fixed;inset:0}
-  canvas{display:block}
-  #grain{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.045;
+  #app{position:fixed;inset:0}canvas{display:block}
+  #grain{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.04;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
   #vignette{position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(120% 90% at 50% 38%,transparent 42%,rgba(0,0,0,.66) 100%)}
   .hud{position:fixed;z-index:10;pointer-events:none}.hud *{pointer-events:auto}
-
   #title{top:24px;left:28px}
   #title .kicker{font-size:10.5px;letter-spacing:.4em;color:var(--steel);text-transform:uppercase;margin-bottom:6px}
   #title h1{font-family:'Anton',sans-serif;font-size:46px;line-height:.88;text-transform:uppercase;
     background:linear-gradient(180deg,#fff,#9fb0c6);-webkit-background-clip:text;background-clip:text;color:transparent}
   #title .tag{margin-top:7px;font-size:12px;color:var(--muted);max-width:300px;line-height:1.5}
-
   #vpanel{top:26px;right:28px;width:284px;text-align:right}
   #vpanel .vno{font-size:10px;letter-spacing:.3em;color:var(--steel);text-transform:uppercase}
   #vpanel .vname{font-family:'Anton',sans-serif;font-size:34px;line-height:1;margin:2px 0 4px;text-transform:uppercase}
@@ -37,34 +32,25 @@
   #vpanel .vnew h4{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--steel);margin-bottom:7px}
   #vpanel .vnew .it{font-size:11px;color:var(--ink);margin-bottom:3px}
   #vpanel .vnew .it span{color:var(--muted);float:left}
-
   #stepper{bottom:30px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
     background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px;backdrop-filter:blur(10px)}
-  .vbtn{font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:var(--muted);background:transparent;
-    border:1px solid transparent;border-radius:4px;padding:9px 13px;cursor:pointer;transition:all .16s;letter-spacing:.05em}
-  .vbtn:hover{color:var(--ink)}
-  .vbtn.on{color:var(--bg);background:var(--calm);border-color:var(--calm)}
+  .vbtn{font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:1px solid transparent;
+    border-radius:4px;padding:9px 13px;cursor:pointer;transition:all .16s;letter-spacing:.05em}
+  .vbtn:hover{color:var(--ink)}.vbtn.on{color:var(--bg);background:var(--calm);border-color:var(--calm)}
   .nav{font-size:14px;color:var(--steel);background:transparent;border:none;cursor:pointer;padding:6px 8px}
   #play{margin-left:6px;border-left:1px solid var(--line);padding-left:12px}
-
   #tools{bottom:34px;right:28px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-  .tbtn{font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);
-    background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:9px 13px;cursor:pointer;backdrop-filter:blur(8px);transition:all .16s}
-  .tbtn:hover{border-color:var(--steel);color:var(--steel)}
-  .tbtn.on{border-color:var(--calm);color:var(--calm)}
+  .tbtn{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:4px;padding:9px 13px;cursor:pointer;backdrop-filter:blur(8px);transition:all .16s}
+  .tbtn:hover{border-color:var(--steel);color:var(--steel)}.tbtn.on{border-color:var(--calm);color:var(--calm)}
   .tbtn.spk:hover{border-color:var(--spike);color:var(--spike)}
-
   #legend{bottom:30px;left:28px;display:flex;flex-direction:column;gap:5px}
-  #legend .li{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);letter-spacing:.04em}
+  #legend .li{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted)}
   #legend .li .d{width:8px;height:8px;border-radius:2px}
-
   .lbl{position:fixed;z-index:8;pointer-events:none;transform:translate(-50%,0);text-align:center;
     font-size:9.5px;letter-spacing:.08em;white-space:nowrap;transition:opacity .3s;line-height:1.3}
-  .lbl .nm{color:var(--ink);text-transform:uppercase}
-  .lbl .pr{color:var(--steel);font-size:9px}
+  .lbl .nm{color:var(--ink);text-transform:uppercase}.lbl .pr{color:var(--steel);font-size:9px}
   .lbl.fresh .nm{color:var(--calm)}
-
-  #status{top:50%;left:28px;transform:translateY(-50%);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);opacity:.0;transition:opacity .3s}
   #hint{bottom:84px;left:50%;transform:translateX(-50%);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);opacity:.6}
   #loader{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;text-align:center;
     background:var(--bg);font-family:'Anton';font-size:17px;letter-spacing:.3em;color:var(--steel)}
@@ -73,269 +59,385 @@
 </style>
 </head>
 <body>
-<div id="loader">ASSEMBLING&nbsp;RIG…</div>
-<div id="app"></div>
-<div id="grain"></div><div id="vignette"></div>
-
+<div id="loader">MODELING&nbsp;RIG…</div>
+<div id="app"></div><div id="grain"></div><div id="vignette"></div>
 <div class="hud" id="title">
   <div class="kicker">Wearable Bio-Reactive Platform</div>
   <h1>Reactive<br>Rig</h1>
-  <div class="tag">A one-man-band gameshow you wear. Real parts, assembled step by step — from a $90 bench test to a $5.4k live-AI spectacle.</div>
+  <div class="tag">Every component modeled in 3D, assembling onto the body step by step — from a $90 bench test to a $5.4k live-AI spectacle.</div>
 </div>
-
 <div class="hud" id="vpanel">
   <div class="vno" id="vno">Stage 1 / 6</div>
   <div class="vname" id="vname">Reflex</div>
-  <div class="vunlock" id="vunlock">Your live pulse turns the lights red.</div>
+  <div class="vunlock" id="vunlock"></div>
   <div class="vcost" id="vcost">$90</div>
   <div class="vcap">cumulative build cost</div>
   <div class="vnew"><h4>Added this stage</h4><div id="vnewlist"></div></div>
 </div>
-
 <div class="hud" id="legend"></div>
-
 <div class="hud" id="tools">
   <button class="tbtn on" id="b-rotate">◐ Auto-Rotate</button>
   <button class="tbtn" id="b-explode">⊞ Explode</button>
   <button class="tbtn spk" id="b-spike">⚡ Trigger Spike</button>
 </div>
-
 <div class="hud" id="stepper">
   <button class="nav" id="prev">◀</button>
-  <button class="vbtn on" data-v="1">V1</button>
-  <button class="vbtn" data-v="2">V2</button>
-  <button class="vbtn" data-v="3">V3</button>
-  <button class="vbtn" data-v="4">V4</button>
-  <button class="vbtn" data-v="5">V5</button>
-  <button class="vbtn" data-v="6">V6</button>
-  <button class="nav" id="next">▶</button>
-  <button class="nav" id="play" title="Play assembly">▶▶</button>
+  <button class="vbtn on" data-v="1">V1</button><button class="vbtn" data-v="2">V2</button>
+  <button class="vbtn" data-v="3">V3</button><button class="vbtn" data-v="4">V4</button>
+  <button class="vbtn" data-v="5">V5</button><button class="vbtn" data-v="6">V6</button>
+  <button class="nav" id="next">▶</button><button class="nav" id="play" title="Play assembly">▶▶</button>
 </div>
-<div id="hint">drag to orbit 360 · scroll to zoom · step through V1–V6</div>
+<div id="hint">drag to orbit 360 · scroll to zoom · step V1–V6</div>
 
 <script>
-  // crash guard — never hang silently
   window.__ok=false;
-  setTimeout(()=>{ if(!window.__ok){const l=document.getElementById('loader');
-    if(l)l.innerHTML='⚠ 3D ENGINE FAILED TO LOAD<small>check your connection and refresh</small>';}},9000);
-  addEventListener('error',e=>{ if(!window.__ok){const l=document.getElementById('loader');
-    if(l)l.innerHTML='⚠ LOAD ERROR<small>'+(e.message||'')+'</small>';}});
+  setTimeout(()=>{if(!window.__ok){const l=document.getElementById('loader');if(l)l.innerHTML='⚠ 3D ENGINE FAILED TO LOAD<small>check connection and refresh</small>';}},9000);
+  addEventListener('error',e=>{if(!window.__ok){const l=document.getElementById('loader');if(l)l.innerHTML='⚠ LOAD ERROR<small>'+(e.message||'')+'</small>';}});
 </script>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 }}
 </script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const CALM=new THREE.Color('#43f08a'), SPIKE=new THREE.Color('#ff3344');
 
-// ---------- data ----------
-const VERSIONS=[
-  {n:'Reflex',     unlock:'Your live pulse turns the lights red.',           cost:'$90'},
-  {n:'Body',       unlock:'Wearable, balanced, street-ready.',               cost:'$455'},
-  {n:'Voice',      unlock:'The rig talks — hands-free, crowd-gathering.',     cost:'$485'},
-  {n:'The Show',   unlock:'A real gameshow: scoreboard, cash, receipts.',    cost:'$595'},
-  {n:'The Mind',   unlock:'A live, improvising AI host.',                    cost:'$3,210'},
-  {n:'Spectacle',  unlock:'Crowd PA, multi-cam, livestreamed.',              cost:'$5,400'},
-];
-// pos = card location in rig layout (y up). color = layer accent. scale = relative card size.
+// ---------- materials ----------
+const M={
+  pcb:new THREE.MeshStandardMaterial({color:0x1f7a45,roughness:.55,metalness:.15}),
+  pcbBlue:new THREE.MeshStandardMaterial({color:0x21304a,roughness:.5,metalness:.2}),
+  pcbPink:new THREE.MeshStandardMaterial({color:0x8a2e57,roughness:.5,metalness:.2}),
+  blk:new THREE.MeshStandardMaterial({color:0x16181e,roughness:.5,metalness:.3}),
+  blkSoft:new THREE.MeshStandardMaterial({color:0x202329,roughness:.7,metalness:.1}),
+  metal:new THREE.MeshStandardMaterial({color:0x9aa3ad,roughness:.32,metalness:.95}),
+  alu:new THREE.MeshStandardMaterial({color:0xc2c8cf,roughness:.34,metalness:.85}),
+  aluDark:new THREE.MeshStandardMaterial({color:0x6b7480,roughness:.4,metalness:.85}),
+  gold:new THREE.MeshStandardMaterial({color:0xd9a441,roughness:.35,metalness:1}),
+  olive:new THREE.MeshStandardMaterial({color:0x4a4d34,roughness:.9,metalness:.05}),
+  oliveD:new THREE.MeshStandardMaterial({color:0x33361f,roughness:.95,metalness:.03}),
+  body:new THREE.MeshStandardMaterial({color:0x1b1f27,roughness:.85,metalness:.1}),
+  glass:new THREE.MeshStandardMaterial({color:0x0a1018,roughness:.1,metalness:.6}),
+  amber:new THREE.MeshStandardMaterial({color:0x4a3410,emissive:0xffae33,emissiveIntensity:2,roughness:.5}),
+  red:new THREE.MeshStandardMaterial({color:0x3a0a0a,emissive:0xff3344,emissiveIntensity:2.4,roughness:.5}),
+};
+const stateMats=[]; // emissive parts that follow calm/spike
+function stateMat(){ const m=new THREE.MeshStandardMaterial({color:0x06140c,emissive:CALM.clone(),emissiveIntensity:2.2,roughness:.4}); stateMats.push(m); return m; }
+
+// ---------- primitive helpers ----------
+const box=(w,h,d,m)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+const cyl=(rt,rb,h,m,s=24)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s),m);
+const sph=(r,m,s=18)=>new THREE.Mesh(new THREE.SphereGeometry(r,s,s),m);
+function at(o,x,y,z,rx=0,ry=0,rz=0){o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o;}
+function G(...kids){const g=new THREE.Group();kids.forEach(k=>g.add(k));return g;}
+
+// ===================================================================
+//  COMPONENT MODELS  (each centered at origin, ~0.3 base footprint)
+// ===================================================================
+function mPi5(){ // green PCB + ports + GPIO + chips
+  const g=G(box(.34,.018,.24,M.pcb));
+  // big SoC chip
+  g.add(at(box(.08,.012,.08,M.blk),-.02,.015,.02));
+  g.add(at(box(.05,.01,.05,M.metal),-.1,.014,-.05));
+  // dual USB/eth stacks on +x edge
+  [-.05,.02,.09].forEach((z,i)=>g.add(at(box(.05,.05,.055,M.metal),.16,.026,z)));
+  // 40-pin GPIO header (gold pins)
+  for(let i=0;i<20;i++){ g.add(at(box(.006,.03,.006,M.gold),-.16+i*.016,.03,.085));
+    g.add(at(box(.006,.03,.006,M.gold),-.16+i*.016,.03,.105)); }
+  g.add(at(box(.13,.012,.04,M.blk),-.16,.015,.075)); // header base
+  // power LED
+  g.add(at(box(.012,.008,.012,stateMat()),-.15,.016,-.1));
+  return g;
+}
+function mJetson(){ // iconic finned heatsink cube
+  const g=G(box(.26,.05,.26,M.aluDark)); // base
+  for(let i=0;i<13;i++){ g.add(at(box(.24,.16,.008,M.alu),0,.13,-.11+i*.018)); } // fins
+  g.add(at(box(.26,.02,.26,M.aluDark),0,.22,0)); // top cap
+  g.add(at(box(.26,.06,.05,M.blk),0,.02,.155)); // I/O front
+  g.add(at(box(.012,.01,.012,M.amber),-.1,.05,.16));
+  return g;
+}
+function mPlateCarrier(){ // vest: front panel + MOLLE + straps + cummerbund
+  const g=new THREE.Group();
+  const front=at(box(.40,.50,.06,M.olive),0,0,0); g.add(front);
+  for(let i=0;i<5;i++) g.add(at(box(.34,.014,.02,M.oliveD),0,.18-i*.085,.035));
+  [-1,1].forEach(s=>g.add(at(box(.07,.30,.06,M.olive),s*.15,.30,-.05,-.2)));
+  g.add(at(box(.44,.12,.30,M.olive),0,-.27,0));
+  return g;
+}
+function mTslot(){ // T-slot frame: spine + boom + brace + riser
+  const bar=(w,h,d)=>{ const b=G(box(w,h,d,M.alu)); // groove stripes
+    if(w>h){b.add(at(box(w,h*.4,d*.4,M.aluDark),0,0,0));}else{b.add(at(box(w*.4,h,d*.4,M.aluDark),0,0,0));}
+    return b; };
+  const g=new THREE.Group();
+  g.add(at(bar(.05,.5,.05),0,0,0));          // spine
+  g.add(at(bar(.05,.22,.05),0,.32,0));       // riser
+  g.add(at(bar(.05,.05,.4),0,.18,.2));       // boom
+  g.add(at(bar(.04,.04,.34),0,.27,.14,-.42));// diagonal brace
+  g.add(at(bar(.22,.05,.05),0,.1,0));        // cross strut
+  return g;
+}
+function mPowerBank(){
+  const g=G(box(.22,.30,.07,M.blkSoft));
+  g.add(at(box(.22,.04,.07,M.blk),0,.13,0));
+  [-.06,0,.06].forEach(x=>g.add(at(box(.02,.012,.02,M.blk),x,.155,0))); // USB-C
+  for(let i=0;i<4;i++) g.add(at(box(.012,.008,.005,M.amber),-.03+i*.02,-.05,.037)); // gauge
+  return g;
+}
+function mDotStar(){ // strip with glowing LED squares
+  const g=G(box(.04,.5,.014,M.blk));
+  for(let i=0;i<12;i++) g.add(at(box(.022,.022,.008,stateMat()),0,.22-i*.04,.01));
+  return g;
+}
+function mMatrix(){ // RGB LED scoreboard
+  const g=G(box(.30,.18,.02,M.blk));
+  for(let r=0;r<6;r++)for(let c=0;c<10;c++) g.add(at(box(.022,.022,.006,stateMat()),-.135+c*.03,.075-r*.03,.012));
+  return g;
+}
+function mThermal(){ // printer + paper curl
+  const g=G(box(.24,.20,.16,M.blkSoft));
+  g.add(at(box(.2,.02,.16,M.blk),0,.1,0));
+  g.add(at(cyl(.09,.09,.18,M.ink||M.alu,20),0,.13,0,Math.PI/2)); // paper roll
+  g.add(at(box(.18,.001,.14,new THREE.MeshStandardMaterial({color:0xf2f2ea,roughness:.9})),0,.17,.06,-.5)); // receipt
+  return g;
+}
+function mGauge(){
+  const g=G(at(cyl(.1,.1,.03,M.blk,28),0,0,0,Math.PI/2));
+  g.add(at(cyl(.085,.085,.005,new THREE.MeshStandardMaterial({color:0xe8e8dd,roughness:.8}),28),0,0,.018,Math.PI/2));
+  g.add(at(box(.008,.075,.006,M.red),0,.03,.024,0,0,.6)); // needle
+  g.add(at(sph(.012,M.blk),0,0,.026));
+  return g;
+}
+function mNatoArm(){
+  const g=new THREE.Group();
+  g.add(sph(.04,M.metal)); g.add(at(cyl(.018,.018,.14,M.metal),0,-.09,0));
+  g.add(at(sph(.04,M.metal),0,-.16,0)); g.add(at(box(.06,.03,.1,M.aluDark),0,-.2,0));
+  return g;
+}
+function mEmotibit(){
+  const g=G(box(.18,.014,.13,M.pcbBlue));
+  g.add(at(box(.05,.012,.05,M.blk),0,.013,0));
+  [-.06,.06].forEach(x=>g.add(at(box(.03,.01,.03,M.metal),x,.012,-.04)));
+  g.add(at(box(.01,.008,.01,stateMat()),.07,.013,.05));
+  return g;
+}
+function mHeart(){ const g=G(box(.12,.012,.09,M.pcbPink)); g.add(at(sph(.012,M.red),0,.012,0)); return g; }
+function mGsr(){ const g=G(box(.12,.012,.09,M.pcb));
+  [-1,1].forEach(s=>{g.add(at(cyl(.006,.006,.1,M.metal,8),s*.04,-.05,0));g.add(at(box(.03,.008,.03,M.metal),s*.04,-.1,0));}); return g; }
+function mPA(){ // voice amp speaker
+  const g=G(box(.16,.22,.07,M.blkSoft));
+  g.add(at(cyl(.06,.06,.01,M.blk,24),0,.02,.036,Math.PI/2));
+  for(let i=1;i<4;i++) g.add(at(cyl(.06-i*.015,.06-i*.015,.012,M.aluDark,24),0,.02,.037,Math.PI/2));
+  g.add(at(box(.03,.05,.02,M.blk),0,-.13,-.02)); // clip
+  return g;
+}
+function mDjiMic(){ const g=G(box(.09,.13,.04,M.blkSoft)); g.add(at(box(.07,.04,.04,M.blk),0,.05,0));
+  g.add(at(sph(.012,stateMat()),0,.05,.025)); g.add(at(box(.03,.04,.015,M.metal),0,-.07,-.02)); return g; }
+function mSoundboks(){ // big PA: 2 woofers + tweeter + handle
+  const g=G(box(.40,.46,.30,M.blkSoft));
+  g.add(at(box(.36,.42,.02,M.blk),0,0,.155)); // baffle
+  [.1,-.1].forEach(y=>{ g.add(at(cyl(.11,.11,.04,M.blk,28),0,y,.16,Math.PI/2));
+    g.add(at(cyl(.08,.08,.03,M.aluDark,28),0,y,.175,Math.PI/2)); g.add(at(sph(.03,M.blk),0,y,.19)); });
+  g.add(at(cyl(.03,.03,.03,M.metal,16),0,.2,.16,Math.PI/2)); // tweeter
+  g.add(at(box(.16,.03,.04,M.metal),0,.26,0)); // handle
+  return g;
+}
+function mCamera(){ // action cam, lens on +z
+  const g=G(box(.12,.10,.06,M.blkSoft));
+  g.add(at(cyl(.04,.045,.04,M.blk,24),0,.01,.04,Math.PI/2));
+  g.add(at(cyl(.03,.03,.012,M.glass,24),0,.01,.062,Math.PI/2));
+  g.add(at(box(.09,.07,.005,M.glass),0,0,-.032)); // screen
+  g.add(at(box(.012,.012,.004,M.red),.04,.03,.032)); // rec dot
+  return g;
+}
+function mVmount(){
+  const g=G(box(.24,.18,.10,M.blkSoft));
+  [-1,1].forEach(s=>g.add(at(box(.012,.16,.03,M.metal),s*.1,0,-.05)));
+  g.add(at(box(.04,.04,.02,M.blk),0,-.05,.052)); // d-tap
+  for(let i=0;i<4;i++) g.add(at(box(.012,.008,.005,M.amber),-.03+i*.02,.06,.052));
+  return g;
+}
+function mHotspot(){ const g=G(box(.13,.09,.022,M.blkSoft)); g.add(at(box(.1,.06,.005,M.glass),0,.005,.013));
+  g.add(at(cyl(.004,.004,.06,M.blk,8),.07,.08,0)); return g; }
+function mBody(){ // matte mannequin (upper body)
+  const g=new THREE.Group();
+  g.add(at(sph(.135,M.body),0,1.45,0));
+  g.add(at(cyl(.055,.06,.1,M.body),0,1.33,0));
+  const torso=at(box(.42,.6,.26,M.body),0,.95,0); g.add(torso);
+  g.add(at(box(.4,.16,.24,M.body),0,.56,0));
+  [-1,1].forEach(s=>g.add(at(cyl(.05,.045,.5,M.body),s*.30,1.0,0,0,0,s*.06)));
+  return g;
+}
+
+// ===================================================================
+//  PARTS TABLE
+// ===================================================================
 const PARTS=[
-  {id:'pi5',  nm:'Raspberry Pi 5', pr:'owned', v:1, img:'pi5.jpg',          pos:[-.52,.62,.14], color:'#b98cff', scale:.95},
-  {id:'hr',   nm:'Heart Sensor',   pr:'$8',    v:1, img:null,               pos:[ .24,1.44,.12], color:'#5ec8d8', scale:.7},
-  {id:'gsr',  nm:'Skin Sensor',    pr:'$33',   v:1, img:null,               pos:[-.26,1.44,.12], color:'#5ec8d8', scale:.7},
-  {id:'led',  nm:'DotStar LEDs',   pr:'$15',   v:1, img:'dotstar.jpg',      pos:[ .02,.58,.34], color:'#43f08a', scale:.85},
+  {id:'pi5',nm:'Raspberry Pi 5',pr:'owned',v:1,color:'#b98cff',make:mPi5,    pos:[-.46,.78,.2], rot:[-.35,.5,0],s:1},
+  {id:'hr', nm:'Heart Sensor',  pr:'$8',   v:1,color:'#5ec8d8',make:mHeart,  pos:[.22,1.42,.16],rot:[1.2,0,0],s:.8},
+  {id:'gsr',nm:'Skin Sensor',   pr:'$33',  v:1,color:'#5ec8d8',make:mGsr,    pos:[-.22,1.42,.16],rot:[1.2,0,0],s:.8},
+  {id:'led',nm:'DotStar LEDs',  pr:'$15',  v:1,color:'#43f08a',make:mDotStar,pos:[0,.9,.28],   rot:[0,0,0],s:1},
 
-  {id:'pc',   nm:'Plate Carrier',  pr:'$87',   v:2, img:'platecarrier.webp',pos:[ 0,.96,-.10], color:'#7a8253', scale:1.5},
-  {id:'frm',  nm:'T-Slot Frame',   pr:'$90',   v:2, img:null,               pos:[ .0,1.06,.24], color:'#5ec8d8', scale:.8},
-  {id:'nato', nm:'NATO Arm',       pr:'$48',   v:2, img:null,               pos:[ .36,1.22,.30], color:'#8fd6e2', scale:.7},
-  {id:'pwr',  nm:'Power Bank',     pr:'$90',   v:2, img:'anker.png',        pos:[-.06,.96,-.44], color:'#ffc24b', scale:1.05},
+  {id:'pc', nm:'Plate Carrier', pr:'$87',  v:2,color:'#7a8253',make:mPlateCarrier,pos:[0,1.0,.16],rot:[0,0,0],s:1.05},
+  {id:'frm',nm:'T-Slot Frame',  pr:'$90',  v:2,color:'#5ec8d8',make:mTslot,  pos:[0,1.02,.24], rot:[0,0,0],s:1},
+  {id:'nat',nm:'NATO Arm',      pr:'$48',  v:2,color:'#8fd6e2',make:mNatoArm,pos:[.3,1.26,.36],rot:[0,0,.4],s:1},
+  {id:'pwr',nm:'Power Bank',    pr:'$90',  v:2,color:'#ffc24b',make:mPowerBank,pos:[0,.95,-.36],rot:[0,0,0],s:1},
 
-  {id:'pa',   nm:'Voice PA',       pr:'$30',   v:3, img:null,               pos:[ .58,.9,-.04], color:'#43f08a', scale:.85},
+  {id:'pa', nm:'Voice PA',      pr:'$30',  v:3,color:'#43f08a',make:mPA,     pos:[.46,.95,0],  rot:[0,.6,0],s:1},
 
-  {id:'mtx',  nm:'Scoreboard',     pr:'$40',   v:4, img:'matrix.jpg',       pos:[ 0,1.2,.34],  color:'#43f08a', scale:1.0},
-  {id:'thm',  nm:'Thermal Printer',pr:'$50',   v:4, img:'thermal.jpg',      pos:[ .52,.6,.12], color:'#ff7ab0', scale:.95},
+  {id:'mtx',nm:'Scoreboard',    pr:'$40',  v:4,color:'#43f08a',make:mMatrix, pos:[0,1.2,.32],  rot:[0,0,0],s:1},
+  {id:'thm',nm:'Thermal Printer',pr:'$50', v:4,color:'#ff7ab0',make:mThermal,pos:[.44,.68,.18],rot:[0,-.5,0],s:.9},
+  {id:'gau',nm:'Needle Gauge',  pr:'$15',  v:4,color:'#ff7ab0',make:mGauge,  pos:[.2,1.14,.28],rot:[0,0,0],s:.8},
 
-  {id:'jet',  nm:'Jetson AGX Orin',pr:'$1,999',v:5, img:'jetson.jpg',       pos:[-.58,.42,.08], color:'#b98cff', scale:1.15},
-  {id:'emo',  nm:'EmotiBit',       pr:'$349',  v:5, img:'emotibit.jpg',     pos:[ 0,1.62,.04], color:'#5ec8d8', scale:.85},
-  {id:'mic',  nm:'DJI Mic 2',      pr:'$269',  v:5, img:null,               pos:[ .44,1.18,.12], color:'#ff7ab0', scale:.75},
+  {id:'jet',nm:'Jetson AGX Orin',pr:'$1,999',v:5,color:'#b98cff',make:mJetson,pos:[-.5,.55,.14],rot:[0,.5,0],s:1.1},
+  {id:'emo',nm:'EmotiBit',      pr:'$349', v:5,color:'#5ec8d8',make:mEmotibit,pos:[0,1.6,.06], rot:[1.4,0,0],s:.9},
+  {id:'mic',nm:'DJI Mic 2',     pr:'$269', v:5,color:'#ff7ab0',make:mDjiMic, pos:[.38,1.2,.16],rot:[0,0,.2],s:.9},
 
-  {id:'sbx',  nm:'Soundboks PA',   pr:'$699',  v:6, img:'soundboks.webp',   pos:[ .62,.5,-.22], color:'#43f08a', scale:1.3},
-  {id:'osm',  nm:'Osmo Action ×2', pr:'$698',  v:6, img:null,               pos:[ 0,1.36,.82], color:'#ff7ab0', scale:.8},
-  {id:'vmt',  nm:'V-Mount Battery',pr:'$260',  v:6, img:'vmount.jpg',       pos:[-.06,.58,-.52], color:'#ffc24b', scale:1.0},
-  {id:'net',  nm:'5G Hotspot',     pr:'$310',  v:6, img:null,               pos:[-.52,.3,-.12], color:'#5ec8d8', scale:.75},
+  {id:'sbx',nm:'Soundboks PA',  pr:'$699', v:6,color:'#43f08a',make:mSoundboks,pos:[.58,.6,-.18],rot:[0,.5,0],s:1},
+  {id:'osm',nm:'Osmo Action ×2',pr:'$698', v:6,color:'#ff7ab0',make:mCamera, pos:[0,1.36,.74], rot:[0,Math.PI,0],s:1},
+  {id:'vmt',nm:'V-Mount Battery',pr:'$260',v:6,color:'#ffc24b',make:mVmount, pos:[0,.62,-.44], rot:[0,0,0],s:1},
+  {id:'net',nm:'5G Hotspot',    pr:'$310', v:6,color:'#5ec8d8',make:mHotspot,pos:[-.48,.4,-.06],rot:[0,.4,0],s:1},
+];
+const VERSIONS=[
+  {n:'Reflex',unlock:'Your live pulse turns the lights red.',cost:'$90'},
+  {n:'Body',unlock:'Wearable, balanced, street-ready.',cost:'$455'},
+  {n:'Voice',unlock:'The rig talks — hands-free, crowd-gathering.',cost:'$485'},
+  {n:'The Show',unlock:'A real gameshow: scoreboard, cash, receipts.',cost:'$595'},
+  {n:'The Mind',unlock:'A live, improvising AI host.',cost:'$3,210'},
+  {n:'Spectacle',unlock:'Crowd PA, multi-cam, livestreamed.',cost:'$5,400'},
 ];
 
-// ---------- renderer / scene ----------
+// ===================================================================
+//  SCENE
+// ===================================================================
 const app=document.getElementById('app');
 let W=app.clientWidth,H=app.clientHeight;
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(W,H);
-renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
 app.appendChild(renderer.domElement);
-
-const scene=new THREE.Scene(); scene.fog=new THREE.FogExp2('#070809',0.10);
-const camera=new THREE.PerspectiveCamera(43,W/H,0.1,100); camera.position.set(2.0,1.25,3.0);
+const scene=new THREE.Scene(); scene.fog=new THREE.FogExp2('#070809',.085);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
+const camera=new THREE.PerspectiveCamera(43,W/H,.1,100); camera.position.set(2.1,1.25,3.1);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true; controls.dampingFactor=.06; controls.target.set(0,.95,0);
-controls.minDistance=1.6; controls.maxDistance=7; controls.maxPolarAngle=Math.PI*.9;
-controls.autoRotate=true; controls.autoRotateSpeed=.85;
+controls.enableDamping=true;controls.dampingFactor=.06;controls.target.set(0,.95,0);
+controls.minDistance=1.5;controls.maxDistance=7;controls.maxPolarAngle=Math.PI*.92;
+controls.autoRotate=true;controls.autoRotateSpeed=.8;
 
-// ---------- stage ----------
-const grid=new THREE.GridHelper(16,32,0x16323b,0x0e1f25); scene.add(grid);
+scene.add(new THREE.HemisphereLight(0x9fc4ff,0x202028,.5));
+const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(3,5,4);scene.add(key);
+const rim=new THREE.DirectionalLight(0x5b8cff,1.2);rim.position.set(-4,2,-3);scene.add(rim);
+const mood=new THREE.PointLight(CALM.clone(),5,8,2);mood.position.set(0,1.3,1.4);scene.add(mood);
+
+const grid=new THREE.GridHelper(16,32,0x16323b,0x0e1f25);scene.add(grid);
 scene.add(new THREE.Mesh(new THREE.CircleGeometry(2.4,64).rotateX(-Math.PI/2),
-  new THREE.MeshBasicMaterial({color:'#0a141a',transparent:true,opacity:.5})).translateY(.001));
+  new THREE.MeshStandardMaterial({color:0x0a141a,roughness:.6,metalness:.2})).translateY(.001));
 
-// ---------- ghost body (assembly target) ----------
-const ghostMat=new THREE.LineBasicMaterial({color:0x2e6675,transparent:true,opacity:.5});
-const ghost=new THREE.Group(); scene.add(ghost);
-function wire(geo){ return new THREE.LineSegments(new THREE.EdgesGeometry(geo),ghostMat); }
-ghost.add(wire(new THREE.SphereGeometry(.135,12,10)).translateY(1.45));
-ghost.add(wire(new THREE.CylinderGeometry(.055,.06,.1,8)).translateY(1.32));
-ghost.add(wire(new THREE.BoxGeometry(.5,.66,.28)).translateY(.92));
-ghost.add(wire(new THREE.BoxGeometry(.46,.16,.26)).translateY(.55));
-[-1,1].forEach(s=>ghost.add(wire(new THREE.CylinderGeometry(.05,.045,.6,6)).translateX(s*.32).translateY(.95)));
-[-1,1].forEach(s=>ghost.add(wire(new THREE.CylinderGeometry(.07,.06,.7,6)).translateX(s*.12).translateY(.2)));
-// crown ring (state-tinted)
-const crownMat=new THREE.MeshBasicMaterial({color:CALM.clone()});
-const crown=new THREE.Mesh(new THREE.TorusGeometry(.16,.012,12,40),crownMat);
-crown.rotation.x=Math.PI/2; crown.position.y=1.6; scene.add(crown);
-// boom line
-const boomG=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,1.3,.2),new THREE.Vector3(0,1.34,.82)]);
-ghost.add(new THREE.Line(boomG,ghostMat));
+// body + crown
+const body=mBody(); scene.add(body);
+const crownMat=new THREE.MeshStandardMaterial({color:0x06140c,emissive:CALM.clone(),emissiveIntensity:2.4,roughness:.4});
+const crown=new THREE.Mesh(new THREE.TorusGeometry(.165,.014,14,44),crownMat);
+crown.rotation.x=Math.PI/2;crown.position.y=1.6;scene.add(crown);
 
-// ---------- cards ----------
-const texLoader=new THREE.TextureLoader();
-const cards=[];
-function placeholderTex(part){
-  const c=document.createElement('canvas'); c.width=420; c.height=300; const x=c.getContext('2d');
-  x.fillStyle='#0c1016'; x.fillRect(0,0,420,300);
-  x.strokeStyle=part.color; x.lineWidth=4; x.strokeRect(8,8,404,284);
-  x.fillStyle=part.color; x.globalAlpha=.16; x.fillRect(8,8,404,70); x.globalAlpha=1;
-  x.fillStyle='#eef1f7'; x.font='600 30px "IBM Plex Mono",monospace'; x.textAlign='center';
-  wrap(x,part.nm.toUpperCase(),210,170,360,34);
-  x.fillStyle=part.color; x.font='600 22px "IBM Plex Mono",monospace'; x.fillText(part.pr,210,250);
-  x.fillStyle=part.color; x.font='700 16px "IBM Plex Mono",monospace'; x.textAlign='left'; x.fillText('●',24,48);
-  x.fillStyle='#79829a'; x.font='13px "IBM Plex Mono",monospace'; x.textAlign='right'; x.fillText('IMG TBD',396,48);
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
-}
-function wrap(ctx,text,cx,cy,maxW,lh){const words=text.split(' ');let line='',lines=[];
-  for(const w of words){const t=line+w+' ';if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w+' ';}else line=t;}
-  lines.push(line);const sy=cy-(lines.length-1)*lh/2;lines.forEach((l,i)=>ctx.fillText(l.trim(),cx,sy+i*lh));}
-
-PARTS.forEach(part=>{
-  const g=new THREE.Group();
-  const baseH=.34*(part.scale||1);
-  const border=new THREE.Mesh(new THREE.PlaneGeometry(baseH+.03,baseH+.03),
-    new THREE.MeshBasicMaterial({color:part.color,transparent:true,opacity:0,side:THREE.DoubleSide}));
-  border.position.z=-.003;
-  const photo=new THREE.Mesh(new THREE.PlaneGeometry(baseH,baseH),
-    new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,side:THREE.DoubleSide}));
-  g.add(border,photo);
-  const apply=(tex,aspect)=>{ photo.material.map=tex; photo.material.needsUpdate=true;
-    const w=baseH*aspect,h=baseH; photo.geometry.dispose(); photo.geometry=new THREE.PlaneGeometry(w,h);
-    border.geometry.dispose(); border.geometry=new THREE.PlaneGeometry(w+.03,h+.03); };
-  if(part.img){
-    texLoader.load('assets/parts/'+part.img,
-      t=>{ t.colorSpace=THREE.SRGBColorSpace; apply(t,(t.image.width/t.image.height)||1); },
-      undefined, ()=>apply(placeholderTex(part),1.4));
-  } else apply(placeholderTex(part),1.4);
-  g.position.set(0,part.pos[1],0); // spawn at spine, fly out on activate
-  scene.add(g);
-  // floating label
-  const el=document.createElement('div'); el.className='lbl';
-  el.innerHTML=`<div class="nm">${part.nm}</div><div class="pr">${part.pr}</div>`;
-  document.body.appendChild(el);
-  cards.push({part,g,border,photo,el,target:new THREE.Vector3(...part.pos),
-    spine:new THREE.Vector3(0,Math.min(1.4,Math.max(.3,part.pos[1])),0),alpha:0,_v:new THREE.Vector3()});
+// build parts
+const items=PARTS.map(part=>{
+  const g=part.make(); g.scale.setScalar(part.s||1);
+  g.position.set(0,part.pos[1],0); scene.add(g);
+  const el=document.createElement('div');el.className='lbl';
+  el.innerHTML=`<div class="nm">${part.nm}</div><div class="pr">${part.pr}</div>`;document.body.appendChild(el);
+  return {part,g,el,alpha:0,target:new THREE.Vector3(...part.pos),
+    spine:new THREE.Vector3(0,Math.min(1.45,Math.max(.4,part.pos[1])),0),
+    baseRot:new THREE.Euler(...part.rot),_v:new THREE.Vector3(),mats:collectMats(g)};
 });
+function collectMats(g){const a=[];g.traverse(n=>{if(n.material){n.material.transparent=true;a.push(n.material);}});return a;}
 
-// leader lines (active cards -> spine)
-const lineMat=new THREE.LineBasicMaterial({color:0x3c7d8c,transparent:true,opacity:.45});
-const lineGeo=new THREE.BufferGeometry();
-const linePos=new Float32Array(cards.length*6); lineGeo.setAttribute('position',new THREE.BufferAttribute(linePos,3));
+// leader lines
+const lineMat=new THREE.LineBasicMaterial({color:0x3c7d8c,transparent:true,opacity:.4});
+const lineGeo=new THREE.BufferGeometry();const linePos=new Float32Array(items.length*6);
+lineGeo.setAttribute('position',new THREE.BufferAttribute(linePos,3));
 scene.add(new THREE.LineSegments(lineGeo,lineMat));
 
-// ---------- state / UI ----------
-let curV=1, exploded=false, spikeUntil=0;
-const $=id=>document.getElementById(id);
-function renderPanel(){
-  const m=VERSIONS[curV-1];
-  $('vno').textContent=`Stage ${curV} / 6`; $('vname').textContent=m.n;
-  $('vunlock').textContent=m.unlock; $('vcost').textContent=m.cost;
+// ---------- UI ----------
+let curV=1,exploded=false,spikeUntil=0;const $=id=>document.getElementById(id);
+function panel(){const m=VERSIONS[curV-1];
+  $('vno').textContent=`Stage ${curV} / 6`;$('vname').textContent=m.n;$('vunlock').textContent=m.unlock;$('vcost').textContent=m.cost;
   $('vnewlist').innerHTML=PARTS.filter(p=>p.v===curV).map(p=>`<div class="it"><span>${p.nm}</span> ${p.pr}</div>`).join('');
-  document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('on',+b.dataset.v===curV));
-}
-function setV(v){ curV=Math.max(1,Math.min(6,v)); renderPanel(); }
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('on',+b.dataset.v===curV));}
+function setV(v){curV=Math.max(1,Math.min(6,v));panel();}
 document.querySelectorAll('.vbtn').forEach(b=>b.onclick=()=>setV(+b.dataset.v));
-$('prev').onclick=()=>setV(curV-1); $('next').onclick=()=>setV(curV+1);
+$('prev').onclick=()=>setV(curV-1);$('next').onclick=()=>setV(curV+1);
 let playing=null;
-$('play').onclick=()=>{ if(playing){clearInterval(playing);playing=null;$('play').textContent='▶▶';return;}
-  if(curV>=6)setV(1); $('play').textContent='❚❚';
-  playing=setInterval(()=>{ if(curV>=6){clearInterval(playing);playing=null;$('play').textContent='▶▶';} else setV(curV+1); },1700); };
+$('play').onclick=()=>{if(playing){clearInterval(playing);playing=null;$('play').textContent='▶▶';return;}
+  if(curV>=6)setV(1);$('play').textContent='❚❚';
+  playing=setInterval(()=>{if(curV>=6){clearInterval(playing);playing=null;$('play').textContent='▶▶';}else setV(curV+1);},1700);};
 $('b-rotate').onclick=()=>{controls.autoRotate=!controls.autoRotate;$('b-rotate').classList.toggle('on',controls.autoRotate);};
 $('b-explode').onclick=()=>{exploded=!exploded;$('b-explode').classList.toggle('on',exploded);};
 $('b-spike').onclick=()=>{spikeUntil=performance.now()+4500;};
-
-// legend
 $('legend').innerHTML=[['#43f08a','Lights / Show'],['#5ec8d8','Structure / Sense'],['#b98cff','Compute'],
   ['#ffc24b','Power'],['#7a8253','Carrier'],['#ff7ab0','Capture / Audio']]
   .map(([c,t])=>`<div class="li"><span class="d" style="background:${c}"></span>${t}</div>`).join('');
-renderPanel();
+panel();
+
+// ---------- bloom ----------
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W,H),.55,.45,.9));
+composer.addPass(new OutputPass());
 
 // ---------- animate ----------
-let heat=0; const clock=new THREE.Clock();
+let heat=0;const clock=new THREE.Clock();const tmpE=new THREE.Euler();
 function animate(){
   requestAnimationFrame(animate);
-  const dt=Math.min(.05,clock.getDelta()), t=clock.elapsedTime;
+  const dt=Math.min(.05,clock.getDelta()),t=clock.elapsedTime;
   const spiking=performance.now()<spikeUntil;
   heat+=((spiking?1:0)-heat)*Math.min(1,dt*3);
-  const stateCol=CALM.clone().lerp(SPIKE,heat);
+  const col=CALM.clone().lerp(SPIKE,heat);
   const beat=Math.exp(-Math.pow(((t*(1+heat*1.1))%1-.1)/.05,2));
-  crownMat.color.copy(stateCol); crown.scale.setScalar(1+beat*.12+heat*.05);
+  crownMat.emissive.copy(col);crownMat.emissiveIntensity=2+beat*2+heat;
+  crown.scale.setScalar(1+beat*.1+heat*.05);
+  mood.color.copy(col);mood.intensity=4+beat*3+heat*3;
+  stateMats.forEach(m=>{m.emissive.copy(col);m.emissiveIntensity=1.6+beat*1.8;});
 
   let li=0;
-  cards.forEach(c=>{
-    const active=c.part.v<=curV;
-    c.alpha+=((active?1:0)-c.alpha)*Math.min(1,dt*5);
-    const fresh=c.part.v===curV;
-    // position: spine when inactive, target (pushed out if exploded) when active
-    const tgt=c.target.clone();
-    if(exploded){ tgt.x*=1.7; tgt.z*=1.7; tgt.y=.95+(tgt.y-.95)*1.5; }
-    const dest = active? tgt : c.spine;
-    c.g.position.lerp(dest,Math.min(1,dt*4));
-    // billboard + scale + opacity
-    c.g.quaternion.copy(camera.quaternion);
-    const pulse=fresh?1+Math.sin(t*5)*.04:1;
-    c.g.scale.setScalar((0.25+0.75*c.alpha)*pulse);
-    c.photo.material.opacity=c.alpha;
-    c.border.material.opacity=c.alpha*(fresh?.95:.5);
-    if(fresh){ c.border.material.color.set('#ffffff'); } else { c.border.material.color.set(c.part.color); }
-    if(c.part.id==='led'||c.part.id==='mtx'){ c.border.material.color.copy(stateCol); }
-    // leader line
-    linePos.set([c.g.position.x,c.g.position.y,c.g.position.z, c.spine.x,c.spine.y,c.spine.z], li*6); li++;
+  items.forEach(it=>{
+    const active=it.part.v<=curV, fresh=it.part.v===curV;
+    it.alpha+=((active?1:0)-it.alpha)*Math.min(1,dt*5);
+    let tgt=it.target.clone();
+    if(exploded){tgt.x*=1.8;tgt.z*=1.8;tgt.y=.95+(tgt.y-.95)*1.6;}
+    const dest=active?tgt:it.spine;
+    it.g.position.lerp(dest,Math.min(1,dt*4));
+    const pulse=fresh?1+Math.sin(t*5)*.03:1;
+    it.g.scale.setScalar((it.part.s||1)*(0.15+0.85*it.alpha)*pulse);
+    // settle into base rotation (slight extra spin while flying in)
+    tmpE.copy(it.baseRot); it.g.rotation.set(
+      THREE.MathUtils.lerp(it.g.rotation.x,tmpE.x,Math.min(1,dt*4)),
+      THREE.MathUtils.lerp(it.g.rotation.y,tmpE.y+(1-it.alpha)*1.2,Math.min(1,dt*4)),
+      THREE.MathUtils.lerp(it.g.rotation.z,tmpE.z,Math.min(1,dt*4)));
+    it.mats.forEach(m=>{m.opacity=it.alpha;});
+    // line
+    linePos.set([it.g.position.x,it.g.position.y,it.g.position.z,it.spine.x,it.spine.y,it.spine.z],li*6);li++;
     // label
-    c._v.copy(c.g.position).project(camera);
-    const x=(c._v.x*.5+.5)*W, y=(-c._v.y*.5+.5)*H + (c.part.scale||1)*30;
-    const vis=active && c._v.z<1 && c.alpha>.6;
-    c.el.style.opacity=vis?(fresh?'1':'.62'):'0';
-    c.el.classList.toggle('fresh',fresh);
-    c.el.style.left=x+'px'; c.el.style.top=y+'px';
+    it._v.copy(it.g.position).project(camera);
+    const x=(it._v.x*.5+.5)*W,y=(-it._v.y*.5+.5)*H+(it.part.s||1)*44;
+    const vis=active&&it._v.z<1&&it.alpha>.6;
+    it.el.style.opacity=vis?(fresh?'1':'.6'):'0';it.el.classList.toggle('fresh',fresh);
+    it.el.style.left=x+'px';it.el.style.top=y+'px';
   });
-  lineGeo.attributes.position.needsUpdate=true;
-  lineMat.color.copy(stateCol).multiplyScalar(.7);
-
-  controls.update();
-  renderer.render(scene,camera);
+  lineGeo.attributes.position.needsUpdate=true; lineMat.color.copy(col).multiplyScalar(.7);
+  controls.update(); composer.render();
 }
-window.__ok=true;
-$('loader').style.display='none';
-animate();
+window.__ok=true; $('loader').style.display='none'; animate();
 addEventListener('resize',()=>{W=app.clientWidth;H=app.clientHeight;camera.aspect=W/H;
-  camera.updateProjectionMatrix();renderer.setSize(W,H);});
+  camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);});
 </script>
 </body>
 </html>
