@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>REACTIVE RIG — Platform Visualization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090d;
+    --calm:#43f08a;
+    --spike:#ff3344;
+    --steel:#5ec8d8;
+    --amber:#ffc24b;
+    --ink:#eef1f7;
+    --muted:#79829a;
+    --panel:rgba(14,17,24,.72);
+    --line:rgba(94,200,216,.22);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+    font-family:'IBM Plex Mono',monospace}
+  #app{position:fixed;inset:0}
+  canvas{display:block}
+  /* grain + vignette */
+  #grain{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:4;
+    background:radial-gradient(120% 90% at 50% 35%,transparent 40%,rgba(0,0,0,.6) 100%)}
+
+  .hud{position:fixed;z-index:10;pointer-events:none}
+  .hud *{pointer-events:auto}
+
+  /* title */
+  #title{top:26px;left:30px}
+  #title .kicker{font-size:11px;letter-spacing:.42em;color:var(--steel);text-transform:uppercase;margin-bottom:6px}
+  #title h1{font-family:'Anton',sans-serif;font-size:54px;line-height:.9;letter-spacing:.01em;
+    text-transform:uppercase;background:linear-gradient(180deg,#fff,#9fb0c6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #title .tag{margin-top:8px;font-size:12.5px;color:var(--muted);max-width:340px;letter-spacing:.02em;line-height:1.5}
+  #title .tag b{color:var(--ink);font-weight:600}
+
+  /* state readout */
+  #state{top:28px;right:30px;text-align:right;min-width:230px}
+  #state .row{display:flex;justify-content:flex-end;align-items:baseline;gap:10px;margin-bottom:4px}
+  #state .lab{font-size:10px;letter-spacing:.28em;color:var(--muted);text-transform:uppercase}
+  #state .bpm{font-family:'Anton',sans-serif;font-size:40px;line-height:1;color:var(--calm);transition:color .4s}
+  #state .bpm .u{font-family:'IBM Plex Mono';font-size:12px;color:var(--muted);margin-left:4px;letter-spacing:.1em}
+  #state .pill{display:inline-block;margin-top:6px;font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    padding:5px 12px;border:1px solid var(--calm);color:var(--calm);border-radius:2px;transition:all .4s}
+  #state.spike .bpm{color:var(--spike)}
+  #state.spike .pill{border-color:var(--spike);color:var(--spike);background:rgba(255,51,68,.08)}
+  /* ECG line */
+  #ecg{margin-top:14px;width:230px;height:46px;display:block;opacity:.9}
+
+  /* funding stats */
+  #stats{bottom:30px;right:30px;text-align:right}
+  #stats .stat{margin-bottom:12px}
+  #stats .num{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:var(--amber)}
+  #stats .cap{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+  /* legend */
+  #legend{bottom:30px;left:30px;width:300px}
+  #legend .lh{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--steel);margin-bottom:10px}
+  .ly{display:flex;align-items:center;gap:11px;padding:6px 9px;margin-bottom:2px;border:1px solid transparent;
+    border-radius:3px;cursor:pointer;transition:all .18s}
+  .ly:hover{background:rgba(94,200,216,.07);border-color:var(--line)}
+  .ly.active{background:rgba(94,200,216,.12);border-color:var(--steel)}
+  .ly .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 8px currentColor}
+  .ly .id{font-size:11px;color:var(--steel);width:22px;font-weight:600}
+  .ly .nm{font-size:11.5px;color:var(--ink);font-weight:500}
+  .ly .ds{font-size:10px;color:var(--muted);margin-left:auto;text-align:right;max-width:130px;line-height:1.3}
+
+  /* controls */
+  #controls{bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+  .btn{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:3px;
+    padding:11px 18px;cursor:pointer;backdrop-filter:blur(8px);transition:all .18s}
+  .btn:hover{border-color:var(--steel);color:var(--steel)}
+  .btn.on{border-color:var(--calm);color:var(--calm);background:rgba(67,240,138,.08)}
+  .btn.danger:hover{border-color:var(--spike);color:var(--spike)}
+
+  /* floating 3d labels */
+  .lbl{position:fixed;z-index:8;pointer-events:none;transform:translate(-50%,-50%);
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);white-space:nowrap;
+    transition:opacity .25s}
+  .lbl .pt{display:inline-block;width:6px;height:6px;border:1px solid var(--steel);border-radius:50%;
+    margin-right:7px;vertical-align:middle;background:rgba(94,200,216,.25)}
+  .lbl small{color:var(--steel);margin-left:6px}
+
+  #hint{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);z-index:8;
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);opacity:.7}
+  #loader{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);font-family:'Anton';font-size:18px;letter-spacing:.3em;color:var(--steel)}
+  @media(max-width:880px){#stats,#legend .ds{display:none}#title h1{font-size:38px}}
+</style>
+</head>
+<body>
+<div id="loader">CALIBRATING&nbsp;RIG…</div>
+<div id="app"></div>
+<div id="grain"></div><div id="vignette"></div>
+
+<div class="hud" id="title">
+  <div class="kicker">Wearable Bio-Reactive Platform</div>
+  <h1>Reactive<br>Rig</h1>
+  <div class="tag">A one-man-band gameshow you <b>wear</b>. Strangers try to make the host crack — their body answers before their mouth can, and the rig <b>exposes it live</b>.</div>
+</div>
+
+<div class="hud" id="state">
+  <div class="row"><span class="lab">Host Heart Rate</span></div>
+  <div class="bpm" id="bpm">72<span class="u">BPM</span></div>
+  <span class="pill" id="pill">● Calm — Green</span>
+  <svg id="ecg" viewBox="0 0 230 46" preserveAspectRatio="none"><polyline id="ecgline" fill="none" stroke="#43f08a" stroke-width="1.6" points=""/></svg>
+</div>
+
+<div class="hud" id="stats">
+  <div class="stat"><div class="num">$595</div><div class="cap">to first street shoot</div></div>
+  <div class="stat"><div class="num">$5.4k</div><div class="cap">full AI-host build</div></div>
+  <div class="stat"><div class="num">9</div><div class="cap">modular layers</div></div>
+</div>
+
+<div class="hud" id="legend">
+  <div class="lh">Platform Layers — click to isolate</div>
+  <div id="legend-rows"></div>
+</div>
+
+<div class="hud" id="controls">
+  <button class="btn on" id="b-rotate">◐ Auto-Rotate</button>
+  <button class="btn" id="b-explode">⊞ Exploded View</button>
+  <button class="btn danger" id="b-spike">⚡ Trigger Spike</button>
+</div>
+<div id="hint">drag to orbit · scroll to zoom</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const CALM = new THREE.Color('#43f08a');
+const SPIKE = new THREE.Color('#ff3344');
+const STEEL = new THREE.Color('#5ec8d8');
+const DARK  = new THREE.Color('#13161d');
+
+// ---------- renderer / scene ----------
+const app = document.getElementById('app');
+let W = app.clientWidth, H = app.clientHeight;
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(W,H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2('#08090d', 0.085);
+
+const camera = new THREE.PerspectiveCamera(42, W/H, 0.1, 100);
+camera.position.set(2.4, 1.6, 3.4);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.target.set(0,1.15,0);
+controls.minDistance = 1.8; controls.maxDistance = 7;
+controls.maxPolarAngle = Math.PI*0.86;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.9;
+
+// ---------- lights ----------
+scene.add(new THREE.AmbientLight('#33406b', 0.6));
+const key = new THREE.DirectionalLight('#cfe6ff', 1.5); key.position.set(3,5,4); scene.add(key);
+const rim = new THREE.DirectionalLight('#3b6cff', 0.9); rim.position.set(-4,2,-3); scene.add(rim);
+const moodLight = new THREE.PointLight(CALM.clone(), 6, 9, 2); moodLight.position.set(0,1.4,1.4); scene.add(moodLight);
+
+// ---------- ground grid ----------
+const grid = new THREE.GridHelper(14, 28, 0x1d3a44, 0x12222a);
+grid.position.y = 0; scene.add(grid);
+const disc = new THREE.Mesh(
+  new THREE.CircleGeometry(2.2, 64).rotateX(-Math.PI/2),
+  new THREE.MeshBasicMaterial({color:'#0c1820', transparent:true, opacity:.55})
+);
+disc.position.y = 0.002; scene.add(disc);
+
+// ---------- materials ----------
+const matBody   = new THREE.MeshStandardMaterial({color:'#1a1e27', metalness:.2, roughness:.78});
+const matCarrier= new THREE.MeshStandardMaterial({color:'#2b2f25', metalness:.25, roughness:.85}); // olive drab
+const matStruct = new THREE.MeshStandardMaterial({color:'#3a4654', metalness:.85, roughness:.35});
+const matSteel  = new THREE.MeshStandardMaterial({color:'#5ec8d8', metalness:.6, roughness:.4, emissive:STEEL.clone().multiplyScalar(.15)});
+const matDarkMetal = new THREE.MeshStandardMaterial({color:'#23262e', metalness:.7, roughness:.45});
+
+// emissive registry — these react to the heartbeat / state
+const emissives = [];
+function emissiveMat(baseColor){
+  const m = new THREE.MeshStandardMaterial({color:'#05070a', emissive:baseColor.clone(),
+    emissiveIntensity:1.4, metalness:.3, roughness:.5});
+  emissives.push(m); return m;
+}
+
+// ---------- helpers ----------
+function box(w,h,d,mat){ return new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); }
+function cyl(rt,rb,h,mat,seg=24){ return new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg), mat); }
+function place(o,x,y,z){ o.position.set(x,y,z); return o; }
+
+// layer groups
+const rig = new THREE.Group(); scene.add(rig);
+const LAYERS = {};
+const layerMeta = [
+  ['L0','Body','var(--ink)','#9fb0c6','the contestant + signal source'],
+  ['L1','Carrier','#7a8253','#7a8253','MOLLE plate carrier — load'],
+  ['L2','Backbone','#5ec8d8','#5ec8d8','T-slot spine + boom (triangulated)'],
+  ['L3','Mounts','#8fd6e2','#8fd6e2','NATO rails · ball-arm · ¼-20'],
+  ['L4','Power','#ffc24b','#ffc24b','battery on back = counterweight'],
+  ['L5','Compute','#b98cff','#b98cff','Pico · Pi 5 · Jetson (3-tier brain)'],
+  ['L6','Sensing','#5ec8d8','#5ec8d8','crown: heart + skin · mic · vision'],
+  ['L7','Expression','#43f08a','#43f08a','scoreboard · LEDs · PA · receipt'],
+  ['L8','Capture','#ff7ab0','#ff7ab0','ultrawide cam aimed back · stream'],
+];
+const explodeDir = { // radial offset direction per layer when exploded
+  L0:[0,0,0], L1:[0,0,-.55], L2:[0,0,.6], L3:[0.55,0,.4], L4:[0,0,-1.0],
+  L5:[-0.75,0,.25], L6:[0,.7,.15], L7:[0.0,0,.95], L8:[0,0,1.5]
+};
+layerMeta.forEach(m=>{ const g=new THREE.Group(); g.userData.dir=new THREE.Vector3(...explodeDir[m[0]]);
+  LAYERS[m[0]]=g; rig.add(g); });
+
+// ===================================================================
+//  BUILD THE FIGURE + RIG  (grouped by layer)
+// ===================================================================
+
+// --- L0 BODY ---
+(()=>{ const g=LAYERS.L0;
+  const head=place(new THREE.Mesh(new THREE.SphereGeometry(.13,32,32),matBody),0,1.56,0); g.add(head);
+  g.add(place(cyl(.05,.06,.1,matBody),0,1.46,0)); // neck
+  const torso=place(box(.42,.62,.24,matBody),0,1.16,0); torso.geometry.translate(0,0,0); g.add(torso);
+  g.add(place(box(.40,.18,.22,matBody),0,0.80,0)); // pelvis
+  // arms
+  [-1,1].forEach(s=>{ const a=place(cyl(.05,.045,.62,matBody),s*0.28,1.18,0); a.rotation.z=s*0.08; g.add(a); });
+  // legs
+  [-1,1].forEach(s=>{ g.add(place(cyl(.07,.06,.8,matBody),s*0.11,0.40,0)); });
+})();
+
+// --- L1 CARRIER (plate carrier front+back, straps, MOLLE webbing) ---
+(()=>{ const g=LAYERS.L1;
+  const front=place(box(.40,.50,.05,matCarrier),0,1.18,.145); g.add(front);
+  const back =place(box(.40,.50,.05,matCarrier),0,1.18,-.145); g.add(back);
+  // MOLLE rows
+  for(let i=0;i<5;i++){ const r=place(box(.34,.012,.01,matDarkMetal),0,1.34-i*.085,.175); g.add(r); }
+  // shoulder straps
+  [-1,1].forEach(s=>{ const st=place(box(.07,.30,.05,matCarrier),s*.15,1.42,.02); st.rotation.x=-.15; g.add(st); });
+  // cummerbund
+  g.add(place(box(.44,.12,.30,matCarrier),0,0.96,0));
+})();
+
+// --- L2 BACKBONE (T-slot spine, boom, triangulation brace, riser) ---
+(()=>{ const g=LAYERS.L2;
+  const spine=place(box(.05,.46,.05,matStruct),0,1.22,.20); g.add(spine);
+  const riser=place(box(.04,.20,.04,matStruct),0,1.52,.20); g.add(riser); // top mast
+  // forward boom
+  const boom=place(box(.04,.04,.44,matStruct),0,1.40,.42); g.add(boom);
+  // triangulation brace (riser top -> boom end)
+  const brace=place(box(.03,.03,.34,matSteel),0,1.49,.34); brace.rotation.x=THREE.MathUtils.degToRad(24); g.add(brace);
+  // little cross-strut
+  g.add(place(box(.20,.04,.04,matStruct),0,1.34,.20));
+})();
+
+// --- L3 MOUNTS (NATO rails + articulating ball-arm) ---
+(()=>{ const g=LAYERS.L3;
+  g.add(place(box(.06,.10,.02,matSteel),0,1.34,.235)); // nato rail on spine
+  const arm=new THREE.Group();
+  arm.add(place(new THREE.Mesh(new THREE.SphereGeometry(.03,16,16),matSteel),0,0,0));
+  arm.add(place(cyl(.014,.014,.12,matSteel),0,-.06,0));
+  arm.add(place(new THREE.Mesh(new THREE.SphereGeometry(.03,16,16),matSteel),0,-.12,0));
+  place(arm,0,1.46,.45); arm.rotation.z=.4; g.add(arm);
+})();
+
+// --- L4 POWER (battery + V-mount on back) ---
+(()=>{ const g=LAYERS.L4;
+  const batt=place(box(.20,.24,.07,matDarkMetal),0,1.16,-.20); g.add(batt);
+  // V-mount fins
+  [-1,1].forEach(s=> g.add(place(box(.012,.20,.02,matSteel),s*.085,1.16,-.235)));
+  // amber power LED
+  const pl=place(box(.03,.012,.005,emissiveMat(new THREE.Color('#ffc24b'))),0,1.27,-.236); g.add(pl);
+})();
+
+// --- L5 COMPUTE (Pico, Pi, Jetson cluster on lower-left front) ---
+(()=>{ const g=LAYERS.L5;
+  const pur=new THREE.Color('#b98cff');
+  const jetson=place(box(.12,.12,.10,matDarkMetal),-.16,1.00,.16); g.add(jetson);
+  g.add(place(box(.10,.012,.07,emissiveMat(pur)),-.16,1.07,.21)); // jetson glow strip
+  const pi=place(box(.085,.02,.055,matDarkMetal),-.16,0.92,.18); g.add(pi);
+  g.add(place(box(.03,.012,.02,emissiveMat(pur)),-.13,0.93,.21)); // pi led
+  const pico=place(box(.035,.012,.018,matDarkMetal),-.05,0.94,.20); g.add(pico);
+})();
+
+// --- L6 SENSING (crown w/ halo, sensors, mic) ---
+let crownMat;
+(()=>{ const g=LAYERS.L6;
+  crownMat = emissiveMat(CALM.clone());
+  const crown=place(new THREE.Mesh(new THREE.TorusGeometry(.155,.018,16,48),crownMat),0,1.585,0);
+  crown.rotation.x=Math.PI/2; g.add(crown);
+  // forehead sensor pods
+  g.add(place(box(.05,.03,.02,matDarkMetal),0,1.585,.135));
+  g.add(place(new THREE.Mesh(new THREE.SphereGeometry(.012,12,12),emissiveMat(STEEL.clone())),0,1.585,.15));
+  // mic on the mast
+  const mic=place(cyl(.015,.02,.10,matDarkMetal),0,1.64,.21); g.add(mic);
+})();
+
+// --- L7 EXPRESSION (scoreboard, body LED strips, matrix, gauge, PA) ---
+let scoreMat, matrixMat;
+const stripMats=[];
+(()=>{ const g=LAYERS.L7;
+  scoreMat=emissiveMat(CALM.clone());
+  const score=place(box(.22,.14,.012,scoreMat),0,1.30,.18); g.add(score); // chest scoreboard
+  matrixMat=emissiveMat(new THREE.Color('#ffc24b'));
+  const matrix=place(box(.20,.07,.01,matrixMat),0,1.12,.185); g.add(matrix); // $ counter
+  // full-body LED strips (down spine + along arms/legs) — pulse with heartbeat
+  const mkStrip=(x,y,z,h)=>{ const sm=emissiveMat(CALM.clone()); stripMats.push(sm);
+    const s=place(box(.012,h,.012,sm),x,y,z); g.add(s); return s; };
+  mkStrip(0,1.0,.205,.95);
+  [-1,1].forEach(s=>mkStrip(s*0.30,1.18,.02,.5));
+  [-1,1].forEach(s=>mkStrip(s*0.115,0.42,.06,.74));
+  // needle gauge
+  const gauge=place(new THREE.Mesh(new THREE.CircleGeometry(.05,32),matDarkMetal),0.13,1.30,.182);
+  const needle=place(box(.004,.045,.004,emissiveMat(SPIKE.clone())),0.13,1.31,.184); needle.rotation.z=.5; g.add(gauge,needle);
+  // PA speaker on shoulder
+  const pa=place(cyl(.06,.06,.05,matDarkMetal),0.20,1.40,-.02); pa.rotation.z=Math.PI/2; g.add(pa);
+  g.add(place(new THREE.Mesh(new THREE.CircleGeometry(.045,24),emissiveMat(STEEL.clone())),0.235,1.40,-.02).rotateY(Math.PI/2));
+})();
+
+// --- L8 CAPTURE (ultrawide camera on boom, aimed back) ---
+let camBody;
+(()=>{ const g=LAYERS.L8;
+  camBody=place(box(.10,.07,.05,matDarkMetal),0,1.40,.64); g.add(camBody);
+  const lens=place(cyl(.028,.032,.05,matStruct),0,1.40,.60); lens.rotation.x=Math.PI/2; g.add(lens); // points back at face
+  g.add(place(new THREE.Mesh(new THREE.SphereGeometry(.018,16,16),emissiveMat(new THREE.Color('#ff7ab0'))),0,1.40,.575));
+  // record dot
+  g.add(place(box(.012,.012,.004,emissiveMat(SPIKE.clone())),.03,1.43,.665));
+})();
+
+// ===================================================================
+//  FLOATING LABELS
+// ===================================================================
+const labelDefs=[
+  {obj:LAYERS.L6, off:[0,.16,0], t:'Crown', s:'heart+skin'},
+  {obj:camBody,   off:[0,.10,0], t:'Camera Boom', s:'aimed back'},
+  {obj:LAYERS.L7, off:[-.28,.18,.1], t:'Scoreboard', s:'green→red'},
+  {obj:LAYERS.L5, off:[-.2,-.05,.05], t:'3-Tier Brain', s:'Pi+Jetson'},
+  {obj:LAYERS.L4, off:[0,.22,-.1], t:'Power', s:'counterweight'},
+  {obj:LAYERS.L1, off:[.3,-.05,0], t:'Plate Carrier', s:'load'},
+];
+const labelEls=labelDefs.map(d=>{ const el=document.createElement('div'); el.className='lbl';
+  el.innerHTML=`<span class="pt"></span>${d.t}<small>${d.s}</small>`; document.body.appendChild(el);
+  d.el=el; d._v=new THREE.Vector3(); return d; });
+
+// ===================================================================
+//  LEGEND UI
+// ===================================================================
+const rowsHost=document.getElementById('legend-rows');
+let isolated=null;
+layerMeta.forEach(m=>{ const row=document.createElement('div'); row.className='ly'; row.dataset.id=m[0];
+  row.innerHTML=`<span class="dot" style="color:${m[3]}"></span><span class="id">${m[0]}</span>
+    <span class="nm">${m[1]}</span><span class="ds">${m[4]}</span>`;
+  row.onclick=()=>toggleIsolate(m[0],row); rowsHost.appendChild(row); });
+
+function setGroupOpacity(g,o){ g.traverse(n=>{ if(n.material){ n.material.transparent=o<1; n.material.opacity=o; }}); }
+function toggleIsolate(id,row){
+  document.querySelectorAll('.ly').forEach(r=>r.classList.remove('active'));
+  if(isolated===id){ isolated=null; Object.values(LAYERS).forEach(g=>setGroupOpacity(g,1)); return; }
+  isolated=id; row.classList.add('active');
+  Object.entries(LAYERS).forEach(([k,g])=>setGroupOpacity(g, k===id?1:0.12));
+}
+
+// ===================================================================
+//  CONTROLS
+// ===================================================================
+let exploded=false;
+const bRot=document.getElementById('b-rotate'), bExp=document.getElementById('b-explode'), bSpk=document.getElementById('b-spike');
+bRot.onclick=()=>{ controls.autoRotate=!controls.autoRotate; bRot.classList.toggle('on',controls.autoRotate); };
+bExp.onclick=()=>{ exploded=!exploded; bExp.classList.toggle('on',exploded); };
+let spikeUntil=0;
+bSpk.onclick=()=>{ spikeUntil=performance.now()+5000; };
+
+// ===================================================================
+//  POST FX (bloom)
+// ===================================================================
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.9,0.5,0.82);
+composer.addPass(bloom);
+
+// ===================================================================
+//  STATE / ANIMATION
+// ===================================================================
+const stateEl=document.getElementById('state');
+const bpmEl=document.getElementById('bpm'), pillEl=document.getElementById('pill');
+const ecgLine=document.getElementById('ecgline');
+let heat=0;            // 0 calm .. 1 spike  (smoothed)
+let bpm=72, dispBpm=72;
+const ecgPts=[]; for(let i=0;i<60;i++) ecgPts.push(23);
+
+function heartbeat(t,bpmv){ // sharp double-thump 0..1
+  const period=60/bpmv; const p=(t%period)/period;
+  const thump=(x,c,w)=>Math.exp(-Math.pow((x-c)/w,2));
+  return Math.min(1, thump(p,.12,.045)*1.0 + thump(p,.30,.06)*0.55);
+}
+
+const clock=new THREE.Clock();
+let beatPhase=0, lastBeatP=0;
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta(), t=clock.elapsedTime;
+
+  // state machine
+  const spiking = performance.now()<spikeUntil;
+  heat += ((spiking?1:0)-heat)*Math.min(1,dt*2.2);
+  bpm = 70 + heat*82;                 // 70 -> 152
+  dispBpm += (bpm-dispBpm)*Math.min(1,dt*4);
+
+  // heartbeat envelope
+  beatPhase += dt*(bpm/60);
+  const env=heartbeat(t,bpm);
+  const col=CALM.clone().lerp(SPIKE,heat);
+
+  // drive emissive parts
+  const glow=1.1 + env*2.2 + heat*0.6;
+  crownMat.emissive.copy(col); crownMat.emissiveIntensity=glow;
+  scoreMat.emissive.copy(col); scoreMat.emissiveIntensity=glow*1.05;
+  stripMats.forEach((m,i)=>{ m.emissive.copy(col); m.emissiveIntensity=0.7+env*2.0; });
+  moodLight.color.copy(col); moodLight.intensity=4+env*5+heat*3;
+
+  // explode lerp
+  Object.values(LAYERS).forEach(g=>{ const tgt=exploded?g.userData.dir:_zero;
+    g.position.lerp(tgt,Math.min(1,dt*3)); });
+
+  controls.update();
+
+  // labels follow 3d
+  labelEls.forEach(d=>{ d.obj.getWorldPosition(d._v); d._v.add(new THREE.Vector3(...d.off));
+    const v=d._v.clone().project(camera);
+    const x=(v.x*0.5+0.5)*W, y=(-v.y*0.5+0.5)*H;
+    const vis = v.z<1 && !isolated;
+    d.el.style.opacity=vis?'.92':'0';
+    d.el.style.left=x+'px'; d.el.style.top=y+'px'; });
+
+  composer.render();
+
+  // HUD (throttle-ish)
+  bpmEl.firstChild.nodeValue=Math.round(dispBpm);
+  stateEl.classList.toggle('spike',heat>0.4);
+  if(heat>0.4){ pillEl.textContent='● Spike — Red'; ecgLine.setAttribute('stroke','#ff3344'); }
+  else { pillEl.textContent='● Calm — Green'; ecgLine.setAttribute('stroke','#43f08a'); }
+
+  // ecg scroll
+  const bp=(beatPhase%1);
+  let yv=23 - (heartbeat(t,bpm)*30); if(bp<lastBeatP){} lastBeatP=bp;
+  ecgPts.push(yv); ecgPts.shift();
+  ecgLine.setAttribute('points', ecgPts.map((p,i)=>`${(i/(ecgPts.length-1))*230},${p+12}`).join(' '));
+}
+const _zero=new THREE.Vector3();
+document.getElementById('loader').style.display='none';
+animate();
+
+// resize
+addEventListener('resize',()=>{ W=app.clientWidth;H=app.clientHeight;
+  camera.aspect=W/H;camera.updateProjectionMatrix();
+  renderer.setSize(W,H);composer.setSize(W,H);bloom.setSize(W,H); });
+</script>
+</body>
+</html>
